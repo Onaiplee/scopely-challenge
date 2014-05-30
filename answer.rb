@@ -10,6 +10,7 @@ module Solver1
       return tree.children[0]
     end
 
+    # pretty print the DFS traversal
     def pp_dfs(tree)
       arr = []
       pp_dfs_helper(tree, arr)
@@ -48,6 +49,7 @@ module Solver1
       return ret
     end
 
+    # format the combination array to add the '-'
     def format_comb(arr)
       ret = []
       arr.each do |sub_arr|
@@ -130,7 +132,8 @@ module Solver2
       path << '/' << current
       if !tree.children.empty?
         set = []
-        tree.children.each do |child|
+        # use reverse to be consistent with the sample in the problem
+        tree.children.reverse_each do |child|
           set << child.data unless child.data.include?('-')
         end
         acc = set.inject('') {|acc, e| acc + e + '|'}[0..-2]
@@ -140,12 +143,45 @@ module Solver2
   end
 end
 
+# part3 solver
+# Because of the nature of the combination tree, any two siblings are
+# the synonyms. So we just need to go one level up, if the parent has
+# an other child, that child is the synonym. Here we assume the path
+# given is valid and can locate a node in the tree.
+module Solver3
+  class << self
+    def synonym_detection(tree, path)
+      dummytree = CTree.new('')
+      dummytree.add_child(tree)
+      names = path.split('/')
+      last = names[-1]
+      names = names[1..-2]
+      current = tree
+      names.each do |name|
+        current.children.each do |child|
+          if child.data == name
+            current = child
+            break
+          end
+        end
+      end
+      current.children.each do |child|
+        if child.data != last
+          names << child.data
+          ret = names.inject('/') { |acc, e| acc + e + '/' }[0..-2]
+          return ret
+        end
+      end
+      return '' 
+    end
+  end
+end
+
 def usage
   puts 'usage:'
   puts 'answer.rb [-a1|-a2|-a3] [-p path]'
 end
 
-# part3 solver
 if ARGV[0] == '-a1' || ARGV[0] == '-a2' || ARGV[0] == '-a3'
   if ARGV[1] == '-p'
     path = ARGV[2]
@@ -158,7 +194,15 @@ if ARGV[0] == '-a1' || ARGV[0] == '-a2' || ARGV[0] == '-a3'
   elsif ARGV[0] == '-a2'
     puts Solver2.tree2path(tree)
   else
-    puts 'not implement'
+    if ARGV[3] == '-i'
+      if !ARGV[4].empty?
+        puts Solver3.synonym_detection(tree, ARGV[4])
+      else
+        usage
+      end
+    else
+      usage
+    end
   end
 else
   usage
